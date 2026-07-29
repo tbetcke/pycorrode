@@ -1,0 +1,16 @@
+[package]
+name = "__MODULE_NAME__"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "__MODULE_NAME__"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "=__PYO3_VERSION__", features = ["extension-module"] }
+__DEPENDENCIES__
+
+[build-dependencies]
+pyo3-build-config = "=__PYO3_VERSION__"

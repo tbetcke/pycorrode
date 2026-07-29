@@ -1,0 +1,10 @@
+include!("user_code.rs");
+
+#[pyo3::pymodule]
+#[pyo3(name = "__MODULE_NAME__")]
+fn __MODULE_NAME__(
+    m: &pyo3::Bound<'_, pyo3::types::PyModule>,
+) -> pyo3::PyResult<()> {
+__REGISTRATIONS__
+    Ok(())
+}

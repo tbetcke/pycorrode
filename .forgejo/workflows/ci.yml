@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: codeberg-small
+
+    container:
+      image: node:24-bookworm
+
+    steps:
+      - name: Check out repository
+        uses: https://data.forgejo.org/actions/checkout@v6
+
+      - name: Install Python and Rust
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends \
+            build-essential \
+            ca-certificates \
+            curl \
+            python3 \
+            python3-venv
+
+          curl --proto '=https' --tlsv1.2 --silent --show-error --fail \
+            https://sh.rustup.rs |
+            sh -s -- -y --profile minimal --default-toolchain stable
+
+      - name: Run checks
+        shell: bash
+        run: |
+          source "$HOME/.cargo/env"
+
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install --editable ".[dev]"
+
+          cargo --version
+          .venv/bin/python --version
+          .venv/bin/ruff check .
+          .venv/bin/python -m pytest
+          .venv/bin/python -m build

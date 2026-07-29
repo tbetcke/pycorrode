@@ -1,0 +1,76 @@
+from __future__ import annotations
+
+import pytest
+
+from pycorrode import (
+    CargoDependency,
+    ExtensionSpec,
+    PyCorrodeConfigurationError,
+)
+
+
+def test_discovers_pyfunction_exports() -> None:
+    spec = ExtensionSpec(
+        name="example",
+        source="""
+#[pyo3::pyfunction]
+fn first() {}
+
+#[pyfunction(name = "renamed")]
+pub(crate) async fn second() {}
+""",
+    )
+
+    assert spec.exports == ("first", "second")
+
+
+def test_normalizes_dependencies_and_features() -> None:
+    spec = ExtensionSpec(
+        name="example",
+        source="#[pyfunction]\nfn exported() {}",
+        dependencies={
+            "z-crate": "1",
+            "a-crate": CargoDependency(
+                version=" 2 ",
+                features=("derive", "derive"),
+                default_features=False,
+            ),
+        },
+    )
+
+    assert list(spec.dependencies) == ["a-crate", "z-crate"]
+    assert spec.dependencies["a-crate"] == CargoDependency(
+        version="2",
+        features=("derive",),
+        default_features=False,
+    )
+
+
+@pytest.mark.parametrize("name", ["has-dash", "1starts_with_number", ""])
+def test_rejects_invalid_module_names(name: str) -> None:
+    with pytest.raises(PyCorrodeConfigurationError):
+        ExtensionSpec(
+            name=name,
+            source="#[pyfunction]\nfn exported() {}",
+        )
+
+
+def test_requires_discoverable_or_explicit_exports() -> None:
+    with pytest.raises(PyCorrodeConfigurationError, match="No #"):
+        ExtensionSpec(name="example", source="fn private() {}")
+
+    spec = ExtensionSpec(
+        name="example",
+        source="fn registered_manually() {}",
+        exports=("registered_manually",),
+    )
+    assert spec.exports == ("registered_manually",)
+
+
+def test_rejects_managed_pyo3_dependencies() -> None:
+    with pytest.raises(PyCorrodeConfigurationError, match="managed"):
+        ExtensionSpec(
+            name="example",
+            source="#[pyfunction]\nfn exported() {}",
+            dependencies={"pyo3": "0.29"},
+        )
