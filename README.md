@@ -49,6 +49,13 @@ Run the included example:
 uv run python examples/double/example.py
 ```
 
+The NumPy example passes a `float64` array to Rust without copying it, sums its
+elements there, and returns the result:
+
+```bash
+uv run --extra examples python examples/numpy_sum/example.py
+```
+
 Run the development checks or build distributions without activating the
 virtual environment:
 
@@ -210,3 +217,7 @@ available Rust registry or native compiler.
 
 See [the architecture notes](docs/architecture.md) for the runtime build
 pipeline and current limitations.
+
+## AI Notice
+
+This project was co-designed with GPT-5.6.

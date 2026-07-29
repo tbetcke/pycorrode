@@ -35,6 +35,9 @@ dev = [
     "pytest>=8",
     "ruff>=0.11",
 ]
+examples = [
+    "numpy>=1.26",
+]
 
 [project.urls]
 Homepage = "https://codeberg.org/nd-project/pycorrode"
