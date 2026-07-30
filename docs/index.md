@@ -40,7 +40,7 @@ assert extension.double(21) == 42
 
 <div class="grid cards" markdown>
 
--   :material-lightning-bolt:{ .lg .middle } **Build on demand**
+-   **Build on demand**
 
     ---
 
@@ -49,7 +49,7 @@ assert extension.double(21) == 42
 
     [Compile your first extension](tutorials/first-extension.md)
 
--   :material-database-clock:{ .lg .middle } **Reuse native artifacts**
+-   **Reuse native artifacts**
 
     ---
 
@@ -58,7 +58,7 @@ assert extension.double(21) == 42
 
     [Understand caching](how-to/caching.md)
 
--   :material-package-variant-closed:{ .lg .middle } **Bring Cargo dependencies**
+-   **Bring Cargo dependencies**
 
     ---
 
@@ -67,7 +67,7 @@ assert extension.double(21) == 42
 
     [Configure dependencies](how-to/dependencies.md)
 
--   :material-alert-decagram:{ .lg .middle } **See Rust diagnostics**
+-   **See Rust diagnostics**
 
     ---
 
