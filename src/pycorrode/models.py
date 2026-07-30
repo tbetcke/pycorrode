@@ -29,7 +29,26 @@ _PYFUNCTION = re.compile(
 
 @dataclass(frozen=True, slots=True)
 class CargoDependency:
-    """A Cargo dependency for a generated project."""
+    """Describe one Cargo dependency for a generated project.
+
+    Exactly one source must be supplied: `version`, `git`, or `path`. Git
+    dependencies may additionally select either `branch` or `rev`.
+
+    Attributes:
+        version: A crates.io version requirement.
+        features: Cargo features to enable, normalized to a sorted tuple.
+        default_features: Whether Cargo should enable the crate's default
+            features.
+        git: URL of a Git repository containing the dependency.
+        path: Local dependency directory. Relative paths are resolved against
+            the current working directory.
+        branch: Git branch to use. Mutually exclusive with `rev`.
+        rev: Git commit or revision to use. Mutually exclusive with `branch`.
+
+    Raises:
+        PyCorrodeConfigurationError: If the source declaration, Git selector,
+            path, or feature list is invalid.
+    """
 
     version: str | None = None
     features: tuple[str, ...] = ()
@@ -144,7 +163,23 @@ DependencyInput = str | CargoDependency
 
 @dataclass(frozen=True, slots=True)
 class ExtensionSpec:
-    """Description of a generated PyO3 extension module."""
+    """Describe a generated PyO3 extension module.
+
+    Attributes:
+        name: Friendly Python identifier for the extension specification. The
+            generated native module uses a content-addressed internal name.
+        source: Rust source containing the functions to compile.
+        dependencies: Cargo dependency names mapped to version strings or
+            `CargoDependency` objects.
+        exports: Rust function names to register. When omitted, ordinary
+            `#[pyfunction]` declarations are discovered automatically.
+        release: Build with Cargo's release profile when true.
+        pyo3_version: Exact PyO3 version managed by the generated project.
+
+    Raises:
+        PyCorrodeConfigurationError: If the name, source, dependency
+            declaration, or export list is invalid.
+    """
 
     name: str
     source: str
@@ -232,7 +267,15 @@ class ExtensionSpec:
 
 @dataclass(frozen=True, slots=True)
 class BuildResult:
-    """The output of a successful extension build."""
+    """Describe the output of a successful extension build.
+
+    Attributes:
+        cache_key: Full content fingerprint identifying the cache entry.
+        module_name: Internal content-addressed native module name.
+        artifact: Path to the installed native extension artifact.
+        cache_hit: Whether the build operation reused a completed cache entry.
+        diagnostics: Rendered non-fatal Cargo and compiler diagnostics.
+    """
 
     cache_key: str
     module_name: str

@@ -31,6 +31,15 @@ def build_extension(
         cache_dir: Override the platform-specific pycorrode cache directory.
         cargo: Path or command name for the Cargo executable.
         force: Discard the matching cache entry and rebuild it.
+
+    Returns:
+        Metadata for the built or cached native extension.
+
+    Raises:
+        PyCorrodeToolchainError: If Cargo or rustc cannot be found or
+            inspected.
+        PyCorrodeBuildError: If Cargo fails or no matching native artifact is
+            produced.
     """
 
     toolchain = Toolchain.discover(cargo)
@@ -72,7 +81,19 @@ def build_extension(
 
 
 def load_extension(result: BuildResult) -> ModuleType:
-    """Load a previously built extension into the current interpreter."""
+    """Load a previously built extension into the current interpreter.
+
+    Args:
+        result: Metadata returned by `build_extension`.
+
+    Returns:
+        The loaded Python extension module. A module already loaded under the
+        same content-addressed name is returned directly.
+
+    Raises:
+        PyCorrodeLoadError: If the artifact is missing, Python cannot create an
+            import specification, or the native loader fails.
+    """
 
     module_name = result.module_name
     artifact = result.artifact.resolve()
@@ -117,7 +138,23 @@ def compile_extension(
     cargo: str | os.PathLike[str] | None = None,
     force: bool = False,
 ) -> ModuleType:
-    """Build and immediately load an extension."""
+    """Build and immediately load an extension.
+
+    Args:
+        spec: Description of the extension source and Cargo dependencies.
+        cache_dir: Override the platform-specific pycorrode cache directory.
+        cargo: Path or command name for the Cargo executable.
+        force: Discard the matching cache entry and rebuild it.
+
+    Returns:
+        The loaded Python extension module.
+
+    Raises:
+        PyCorrodeToolchainError: If Cargo or rustc cannot be found or
+            inspected.
+        PyCorrodeBuildError: If Cargo fails to build the extension.
+        PyCorrodeLoadError: If Python cannot load the built artifact.
+    """
 
     result = build_extension(
         spec,

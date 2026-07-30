@@ -18,7 +18,13 @@ class PyCorrodeToolchainError(PyCorrodeError):
 
 
 class PyCorrodeBuildError(PyCorrodeError):
-    """Cargo failed to build a generated extension project."""
+    """Cargo failed to build a generated extension project.
+
+    Attributes:
+        diagnostics: Rendered compiler diagnostics and Cargo output.
+        command: Command arguments used for the failed process.
+        returncode: Process exit status, when one was available.
+    """
 
     def __init__(
         self,

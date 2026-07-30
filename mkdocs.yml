@@ -1,0 +1,93 @@
+site_name: pycorrode
+site_description: Compile small PyO3 extensions from Python, on demand.
+site_url: https://tbetcke.github.io/pycorrode/
+repo_name: tbetcke/pycorrode
+repo_url: https://github.com/tbetcke/pycorrode
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2026 pycorrode contributors
+
+theme:
+  name: material
+  font: false
+  icon:
+    logo: material/language-rust
+    repo: fontawesome/brands/github
+  features:
+    - content.code.copy
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - search.highlight
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep-orange
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Use dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep-orange
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Use light mode
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Tutorials:
+      - Your first extension: tutorials/first-extension.md
+      - Multiple functions: tutorials/multiple-functions.md
+      - NumPy arrays: tutorials/numpy-arrays.md
+  - How-to guides:
+      - Cargo dependencies: how-to/dependencies.md
+      - Caching and rebuilds: how-to/caching.md
+      - Handle errors: how-to/error-handling.md
+      - Troubleshooting: how-to/troubleshooting.md
+  - Reference:
+      - Python API: reference/api.md
+  - Explanation:
+      - Architecture: explanation/architecture.md
+      - Security model: explanation/security.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - src
+          options:
+            docstring_section_style: list
+            docstring_style: google
+            heading_level: 2
+            members_order: source
+            merge_init_into_class: true
+            separate_signature: true
+            show_root_heading: true
+            show_signature_annotations: true
+            show_source: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/extra.css

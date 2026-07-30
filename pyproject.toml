@@ -38,11 +38,17 @@ dev = [
 examples = [
     "numpy>=1.26",
 ]
+docs = [
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.7,<10",
+    "mkdocstrings[python]>=1,<2",
+]
 
 [project.urls]
-Homepage = "https://codeberg.org/nd-project/pycorrode"
-Repository = "https://codeberg.org/nd-project/pycorrode"
-Issues = "https://codeberg.org/nd-project/pycorrode/issues"
+Documentation = "https://tbetcke.github.io/pycorrode/"
+Homepage = "https://tbetcke.github.io/pycorrode/"
+Repository = "https://github.com/tbetcke/pycorrode"
+Issues = "https://github.com/tbetcke/pycorrode/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/pycorrode"]
@@ -55,6 +61,7 @@ include = [
     "/docs",
     "/README.md",
     "/LICENSE",
+    "/mkdocs.yml",
     "/pyproject.toml",
 ]
 

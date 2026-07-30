@@ -1,8 +1,11 @@
 # pycorrode
 
-`pycorrode` builds small [PyO3](https://pyo3.rs/) extension modules on demand
-by invoking the user's Cargo toolchain, caches the resulting native library, and
-loads it into the running Python interpreter.
+[![CI](https://github.com/tbetcke/pycorrode/actions/workflows/ci.yml/badge.svg)](https://github.com/tbetcke/pycorrode/actions/workflows/ci.yml)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-b7410e)](https://tbetcke.github.io/pycorrode/)
+
+`pycorrode` builds small [PyO3](https://pyo3.rs/) extension modules on demand,
+caches the resulting native library, and loads it into the running Python
+interpreter.
 
 The project is currently an alpha. Its first API intentionally covers a narrow
 use case: provide Rust source containing one or more `#[pyfunction]` functions
@@ -11,72 +14,30 @@ and receive an importable Python extension module.
 ## Requirements
 
 - Python 3.11 or newer
-- A working `cargo` and `rustc` installation
-- Network access to crates.io for the first build, unless the required crates
-  are already in Cargo's cache
-- A platform toolchain capable of building Python native extensions
+- `cargo` and `rustc` on `PATH`
+- a platform toolchain capable of building Python native extensions
+- network access to dependency sources for the first build, unless cached
 
-`pycorrode` itself is a pure Python package. The Rust toolchain is a runtime
-system requirement and is not installed by `pip` or `uv`.
+`pycorrode` is pure Python. It uses the existing Rust toolchain at runtime and
+does not install Cargo or rustc.
 
-## Installation
+## Installation from a checkout
 
-From a checkout:
+With [`uv`](https://docs.astral.sh/uv/):
+
+```bash
+git clone https://github.com/tbetcke/pycorrode.git
+cd pycorrode
+uv sync --extra dev
+```
+
+Or with `venv` and `pip`:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
-```
-
-### Using uv
-
-With [`uv`](https://docs.astral.sh/uv/) installed, create the project
-environment and install the development extra:
-
-```bash
-uv sync --extra dev
-```
-
-`uv` creates `.venv` automatically and installs the checkout as an editable
-package. Cargo and rustc must still be installed separately and available on
-`PATH`.
-
-Run the included example:
-
-```bash
-uv run python examples/double/example.py
-```
-
-The two-functions example compiles a single extension containing both `add`
-and `multiply`:
-
-```bash
-uv run python examples/two_functions/example.py
-```
-
-The NumPy example passes a `float64` array to Rust without copying it, sums its
-elements there, and returns the result:
-
-```bash
-uv run --extra examples python examples/numpy_sum/example.py
-```
-
-Run the development checks or build distributions without activating the
-virtual environment:
-
-```bash
-uv run --extra dev ruff check .
-uv run --extra dev pytest
-uv build
-```
-
-To install only the package's runtime dependencies, omit the development
-extra:
-
-```bash
-uv sync
+python -m pip install --editable ".[dev]"
 ```
 
 ## Quick start
@@ -84,9 +45,10 @@ uv sync
 ```python
 from pycorrode import ExtensionSpec, compile_extension
 
-spec = ExtensionSpec(
-    name="double",
-    source="""
+extension = compile_extension(
+    ExtensionSpec(
+        name="double",
+        source="""
 use pyo3::prelude::*;
 
 #[pyfunction]
@@ -94,164 +56,56 @@ fn double(value: i64) -> i64 {
     value * 2
 }
 """,
+    )
 )
 
-module = compile_extension(spec)
-assert module.double(21) == 42
+assert extension.double(21) == 42
 ```
 
-By default, `pycorrode` discovers straightforward functions annotated with
-`#[pyfunction]`. For macros or formatting that cannot be discovered
-automatically, list the Rust function names explicitly:
+The first run invokes Cargo. Later calls with the same source, dependencies,
+interpreter, platform, and toolchain reuse the validated cached artifact.
 
-```python
-spec = ExtensionSpec(
-    name="custom",
-    source=rust_source,
-    exports=("first_function", "second_function"),
-)
+## Documentation
+
+The [documentation site](https://tbetcke.github.io/pycorrode/) includes:
+
+- a [getting-started guide](https://tbetcke.github.io/pycorrode/getting-started/)
+- tutorials for [multiple functions](https://tbetcke.github.io/pycorrode/tutorials/multiple-functions/)
+  and [NumPy arrays](https://tbetcke.github.io/pycorrode/tutorials/numpy-arrays/)
+- how-to guides for [Cargo dependencies](https://tbetcke.github.io/pycorrode/how-to/dependencies/),
+  caching, errors, and troubleshooting
+- the generated [Python API reference](https://tbetcke.github.io/pycorrode/reference/api/)
+- architecture and security explanations
+
+## Examples
+
+```bash
+uv run python examples/double/example.py
+uv run python examples/two_functions/example.py
+uv run --extra examples python examples/numpy_sum/example.py
 ```
 
-Crates.io dependencies can be declared using version strings:
+## Development
 
-```python
-spec = ExtensionSpec(
-    name="uses_dependency",
-    source=rust_source,
-    dependencies={"serde": "1.0"},
-)
+Install all development surfaces:
+
+```bash
+uv sync --extra dev --extra docs --extra examples
 ```
 
-Use `CargoDependency` to specify feature flags or disable a crate's default
-features:
+Run the checks:
 
-```python
-from pycorrode import CargoDependency, ExtensionSpec
-
-spec = ExtensionSpec(
-    name="uses_serde",
-    source=rust_source,
-    dependencies={
-        "serde": CargoDependency(
-            version="1.0",
-            features=("derive",),
-            default_features=False,
-        )
-    },
-)
+```bash
+uv run --extra dev ruff check .
+uv run --extra dev pytest
+uv run --extra docs mkdocs build --strict
+uv build
 ```
 
-Git dependencies use the repository URL as their source:
+Preview the documentation:
 
-```python
-spec = ExtensionSpec(
-    name="uses_git_dependency",
-    source=rust_source,
-    dependencies={
-        "remote-crate": CargoDependency(
-            git="https://github.com/owner/remote-crate.git",
-            branch="main",
-            features=("fast",),
-        )
-    },
-)
-```
-
-Use `rev` instead of `branch` to pin the dependency to a specific commit:
-
-```python
-CargoDependency(
-    git="https://github.com/owner/remote-crate.git",
-    rev="0123456789abcdef0123456789abcdef01234567",
-    features=("fast",),
-)
-```
-
-`branch` and `rev` are mutually exclusive and are valid only for Git
-dependencies.
-
-Local dependencies use a filesystem path:
-
-```python
-spec = ExtensionSpec(
-    name="uses_local_dependency",
-    source=rust_source,
-    dependencies={
-        "local-crate": CargoDependency(
-            path="../local-crate",
-            features=("fast",),
-        )
-    },
-)
-```
-
-Each `CargoDependency` must specify exactly one of `version`, `git`, or `path`.
-Feature flags and `default_features` work with every source type. Relative
-filesystem paths are resolved against the current working directory when the
-`CargoDependency` is created.
-
-## Build and load separately
-
-Compilation and importing are separate operations:
-
-```python
-from pycorrode import build_extension, load_extension
-
-result = build_extension(spec)
-print(result.artifact)
-print(result.cache_hit)
-
-module = load_extension(result)
-```
-
-Use a temporary or application-specific cache when required:
-
-```python
-result = build_extension(spec, cache_dir="/path/to/cache")
-```
-
-The default cache follows the platform's user-cache convention. Set
-`PYCORRODE_CACHE_DIR` to override it globally.
-
-## How the cache works
-
-The cache key incorporates:
-
-- Rust source and exported function names
-- Cargo dependency declarations and PyO3 version
-- Python implementation and ABI
-- operating system and architecture
-- Cargo and Rust compiler versions and Rust target
-- build profile and the generated-project schema version
-
-Each entry contains its generated Cargo project, Cargo target directory,
-renamed Python extension, metadata, and a completion marker. A per-entry file
-lock prevents concurrent processes from building the same extension
-simultaneously.
-
-Use `force=True` to rebuild an entry:
-
-```python
-result = build_extension(spec, force=True)
-```
-
-The cache fingerprints dependency declarations, not the contents behind a local
-path or a moving Git reference. Use `force=True` after changing a local
-dependency or when the Git repository resolves to a newer commit.
-
-## Errors
-
-Toolchain, configuration, compilation, and loading failures use subclasses of
-`PyCorrodeError`. Rust diagnostics are available on
-`PyCorrodeBuildError.diagnostics`.
-
-```python
-from pycorrode import PyCorrodeBuildError
-
-try:
-    module = compile_extension(spec)
-except PyCorrodeBuildError as error:
-    print(error.diagnostics)
+```bash
+uv run --extra docs mkdocs serve
 ```
 
 ## Security
@@ -260,25 +114,11 @@ Rust source, Cargo dependencies, dependency build scripts, and the compiled
 extension all execute native code with the current user's permissions. Never
 compile or load untrusted source or dependency declarations.
 
-## Development
+See the full [security model](https://tbetcke.github.io/pycorrode/explanation/security/).
 
-```bash
-ruff check .
-pytest
-python -m build
-```
+## License
 
-The integration tests invoke Cargo and compile a real PyO3 module:
-
-```bash
-pytest -m integration
-```
-
-Set `PYCORRODE_SKIP_INTEGRATION=1` to skip them in an environment without an
-available Rust registry or native compiler.
-
-See [the architecture notes](docs/architecture.md) for the runtime build
-pipeline and current limitations.
+`pycorrode` is distributed under the [MIT License](LICENSE).
 
 ## AI Notice
 
