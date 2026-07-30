@@ -49,6 +49,13 @@ Run the included example:
 uv run python examples/double/example.py
 ```
 
+The two-functions example compiles a single extension containing both `add`
+and `multiply`:
+
+```bash
+uv run python examples/two_functions/example.py
+```
+
 The NumPy example passes a `float64` array to Rust without copying it, sums its
 elements there, and returns the result:
 
