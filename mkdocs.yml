@@ -7,7 +7,35 @@ edit_uri: edit/main/docs/
 copyright: Copyright &copy; 2026 pycorrode contributors
 
 theme:
-  name: mkdocs
+  name: material
+  font: false
+  icon:
+    logo: material/language-rust
+    repo: fontawesome/brands/github
+  features:
+    - content.code.copy
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - search.highlight
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep-orange
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Use dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep-orange
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Use light mode
 
 nav:
   - Home: index.md
@@ -47,13 +75,19 @@ plugins:
 
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
   - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
+  - pymdownx.inlinehilite
   - pymdownx.snippets:
       check_paths: true
   - pymdownx.superfences
   - toc:
       permalink: true
+
+extra_css:
+  - stylesheets/extra.css
