@@ -150,11 +150,25 @@ spec = ExtensionSpec(
     dependencies={
         "remote-crate": CargoDependency(
             git="https://github.com/owner/remote-crate.git",
+            branch="main",
             features=("fast",),
         )
     },
 )
 ```
+
+Use `rev` instead of `branch` to pin the dependency to a specific commit:
+
+```python
+CargoDependency(
+    git="https://github.com/owner/remote-crate.git",
+    rev="0123456789abcdef0123456789abcdef01234567",
+    features=("fast",),
+)
+```
+
+`branch` and `rev` are mutually exclusive and are valid only for Git
+dependencies.
 
 Local dependencies use a filesystem path:
 

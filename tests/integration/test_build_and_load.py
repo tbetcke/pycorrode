@@ -50,6 +50,39 @@ pub fn transform(value: i64) -> i64 {{
     )
 
 
+def _initialize_git_repository(root: Path, branch: str) -> str:
+    subprocess.run(["git", "init", "--quiet"], cwd=root, check=True)
+    subprocess.run(
+        ["git", "checkout", "--quiet", "-b", branch],
+        cwd=root,
+        check=True,
+    )
+    subprocess.run(["git", "add", "."], cwd=root, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=pycorrode tests",
+            "-c",
+            "user.email=tests@pycorrode.invalid",
+            "commit",
+            "--quiet",
+            "-m",
+            "Initial dependency",
+        ],
+        cwd=root,
+        check=True,
+    )
+    completed = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return completed.stdout.strip()
+
+
 @pytest.mark.skipif(
     not _integration_available(),
     reason="Rust integration tests are disabled or no toolchain is available",
@@ -81,7 +114,7 @@ fn double(value: i64) -> i64 {
     not _integration_available() or shutil.which("git") is None,
     reason="Rust dependency integration requires Cargo, rustc, and Git",
 )
-def test_builds_with_path_git_and_feature_dependencies(tmp_path: Path) -> None:
+def test_builds_with_path_git_selectors_and_features(tmp_path: Path) -> None:
     path_dependency = tmp_path / "path-dependency"
     _write_dependency_crate(
         path_dependency,
@@ -90,30 +123,23 @@ def test_builds_with_path_git_and_feature_dependencies(tmp_path: Path) -> None:
         expression="value * 3",
     )
 
-    git_dependency = tmp_path / "git-dependency"
+    branch_dependency = tmp_path / "branch-dependency"
     _write_dependency_crate(
-        git_dependency,
-        package_name="git-dependency",
+        branch_dependency,
+        package_name="branch-dependency",
         feature="increment",
         expression="value + 1",
     )
-    subprocess.run(["git", "init", "--quiet"], cwd=git_dependency, check=True)
-    subprocess.run(["git", "add", "."], cwd=git_dependency, check=True)
-    subprocess.run(
-        [
-            "git",
-            "-c",
-            "user.name=pycorrode tests",
-            "-c",
-            "user.email=tests@pycorrode.invalid",
-            "commit",
-            "--quiet",
-            "-m",
-            "Initial dependency",
-        ],
-        cwd=git_dependency,
-        check=True,
+    _initialize_git_repository(branch_dependency, "feature-branch")
+
+    revision_dependency = tmp_path / "revision-dependency"
+    _write_dependency_crate(
+        revision_dependency,
+        package_name="revision-dependency",
+        feature="decrement",
+        expression="value - 1",
     )
+    revision = _initialize_git_repository(revision_dependency, "main")
 
     spec = ExtensionSpec(
         name="dependency_sources",
@@ -122,17 +148,25 @@ use pyo3::prelude::*;
 
 #[pyfunction]
 fn combine(value: i64) -> i64 {
-    path_dependency::transform(value) + git_dependency::transform(value)
+    path_dependency::transform(value)
+        + branch_dependency::transform(value)
+        + revision_dependency::transform(value)
 }
 """,
         dependencies={
-            "git-dependency": CargoDependency(
-                git=git_dependency.as_uri(),
+            "branch-dependency": CargoDependency(
+                git=branch_dependency.as_uri(),
+                branch="feature-branch",
                 features=("increment",),
             ),
             "path-dependency": CargoDependency(
                 path=path_dependency,
                 features=("triple",),
+            ),
+            "revision-dependency": CargoDependency(
+                git=revision_dependency.as_uri(),
+                rev=revision,
+                features=("decrement",),
             ),
         },
     )
@@ -140,4 +174,4 @@ fn combine(value: i64) -> i64 {
     result = build_extension(spec, cache_dir=tmp_path / "cache")
     module = load_extension(result)
 
-    assert module.combine(4) == 17
+    assert module.combine(4) == 20

@@ -85,6 +85,10 @@ def _dependency_value(dependency: CargoDependency) -> str:
         fields = [f"version = {json.dumps(dependency.version)}"]
     elif dependency.git is not None:
         fields = [f"git = {json.dumps(dependency.git)}"]
+        if dependency.branch is not None:
+            fields.append(f"branch = {json.dumps(dependency.branch)}")
+        elif dependency.rev is not None:
+            fields.append(f"rev = {json.dumps(dependency.rev)}")
     else:
         assert dependency.path is not None
         fields = [f"path = {json.dumps(dependency.path)}"]

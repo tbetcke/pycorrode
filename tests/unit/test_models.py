@@ -59,7 +59,12 @@ def test_normalizes_git_and_relative_path_dependencies(
 
     git_dependency = CargoDependency(
         git=" https://example.com/example/repository.git ",
+        branch=" feature-branch ",
         features=("serde",),
+    )
+    revision_dependency = CargoDependency(
+        git="https://example.com/example/repository.git",
+        rev=" 0123456789abcdef0123456789abcdef01234567 ",
     )
     path_dependency = CargoDependency(
         path="crates/local-dependency",
@@ -71,6 +76,13 @@ def test_normalizes_git_and_relative_path_dependencies(
         "default_features": True,
         "features": ["serde"],
         "git": "https://example.com/example/repository.git",
+        "branch": "feature-branch",
+    }
+    assert revision_dependency.canonical() == {
+        "default_features": True,
+        "features": [],
+        "git": "https://example.com/example/repository.git",
+        "rev": "0123456789abcdef0123456789abcdef01234567",
     }
     assert path_dependency.path == str(
         (tmp_path / "crates/local-dependency").resolve()
@@ -99,11 +111,36 @@ def test_requires_exactly_one_dependency_source(
 
 
 @pytest.mark.parametrize(
+    ("dependency", "message"),
+    [
+        ({"version": "1", "branch": "main"}, "require a Git source"),
+        ({"path": "local-dependency", "rev": "abc1234"}, "require a Git source"),
+        (
+            {
+                "git": "https://example.com/repository.git",
+                "branch": "main",
+                "rev": "abc1234",
+            },
+            "mutually exclusive",
+        ),
+    ],
+)
+def test_rejects_invalid_git_selectors(
+    dependency: dict[str, str],
+    message: str,
+) -> None:
+    with pytest.raises(PyCorrodeConfigurationError, match=message):
+        CargoDependency(**dependency)
+
+
+@pytest.mark.parametrize(
     "dependency",
     [
         {"version": ""},
         {"git": " "},
         {"path": ""},
+        {"git": "https://example.com/repository.git", "branch": ""},
+        {"git": "https://example.com/repository.git", "rev": " "},
     ],
 )
 def test_rejects_empty_dependency_sources(

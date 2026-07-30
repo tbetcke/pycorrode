@@ -37,6 +37,8 @@ class CargoDependency:
     _: KW_ONLY
     git: str | None = None
     path: str | Path | None = None
+    branch: str | None = None
+    rev: str | None = None
 
     def __post_init__(self) -> None:
         sources = {
@@ -79,6 +81,34 @@ class CargoDependency:
                 ) from error
             object.__setattr__(self, "path", str(path))
 
+        selectors = [
+            name
+            for name, value in (("branch", self.branch), ("rev", self.rev))
+            if value is not None
+        ]
+        if selectors and self.git is None:
+            raise PyCorrodeConfigurationError(
+                "Cargo dependency branch and rev selectors require a Git source"
+            )
+        if len(selectors) > 1:
+            raise PyCorrodeConfigurationError(
+                "Cargo dependency branch and rev selectors are mutually exclusive"
+            )
+
+        if self.branch is not None:
+            if not isinstance(self.branch, str) or not self.branch.strip():
+                raise PyCorrodeConfigurationError(
+                    "Cargo dependency Git branches cannot be empty"
+                )
+            object.__setattr__(self, "branch", self.branch.strip())
+
+        if self.rev is not None:
+            if not isinstance(self.rev, str) or not self.rev.strip():
+                raise PyCorrodeConfigurationError(
+                    "Cargo dependency Git revisions cannot be empty"
+                )
+            object.__setattr__(self, "rev", self.rev.strip())
+
         features: list[str] = []
         for feature in self.features:
             if not isinstance(feature, str) or not feature.strip():
@@ -100,6 +130,10 @@ class CargoDependency:
             result["version"] = self.version
         elif self.git is not None:
             result["git"] = self.git
+            if self.branch is not None:
+                result["branch"] = self.branch
+            elif self.rev is not None:
+                result["rev"] = self.rev
         else:
             result["path"] = self.path
         return result

@@ -15,7 +15,12 @@ def test_materializes_generated_project(tmp_path: Path) -> None:
         dependencies={
             "git-dependency": CargoDependency(
                 git="https://example.com/dependency.git",
+                branch="feature-branch",
                 features=("serde",),
+            ),
+            "git-revision": CargoDependency(
+                git="https://example.com/dependency.git",
+                rev="0123456789abcdef0123456789abcdef01234567",
             ),
             "local-dependency": CargoDependency(
                 path=local_dependency,
@@ -45,7 +50,11 @@ def test_materializes_generated_project(tmp_path: Path) -> None:
     ) in manifest
     assert (
         'git-dependency = { git = "https://example.com/dependency.git", '
-        'features = ["serde"] }'
+        'branch = "feature-branch", features = ["serde"] }'
+    ) in manifest
+    assert (
+        'git-revision = { git = "https://example.com/dependency.git", '
+        'rev = "0123456789abcdef0123456789abcdef01234567" }'
     ) in manifest
     assert (
         f"local-dependency = {{ path = {json.dumps(str(local_dependency))}, "

@@ -50,7 +50,7 @@ entry while holding its external lock.
 
 ## Current limitations
 
-- Git dependency branch, tag, and revision selectors are not yet exposed.
+- Git dependency tag selectors are not yet exposed.
 - Mutable Git and local path dependency contents require `force=True` to
   invalidate an existing completed cache entry.
 - Automatic export discovery targets ordinary `#[pyfunction]` declarations.
