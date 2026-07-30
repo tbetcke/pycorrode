@@ -74,11 +74,20 @@ def _render_dependencies(spec: ExtensionSpec) -> str:
 
 
 def _dependency_value(dependency: CargoDependency) -> str:
-    version = json.dumps(dependency.version)
-    if dependency.default_features and not dependency.features:
-        return version
+    if (
+        dependency.version is not None
+        and dependency.default_features
+        and not dependency.features
+    ):
+        return json.dumps(dependency.version)
 
-    fields = [f"version = {version}"]
+    if dependency.version is not None:
+        fields = [f"version = {json.dumps(dependency.version)}"]
+    elif dependency.git is not None:
+        fields = [f"git = {json.dumps(dependency.git)}"]
+    else:
+        assert dependency.path is not None
+        fields = [f"path = {json.dumps(dependency.path)}"]
     if not dependency.default_features:
         fields.append("default-features = false")
     if dependency.features:

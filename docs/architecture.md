@@ -50,7 +50,9 @@ entry while holding its external lock.
 
 ## Current limitations
 
-- Only crates.io version dependencies are represented by the public API.
+- Git dependency branch, tag, and revision selectors are not yet exposed.
+- Mutable Git and local path dependency contents require `force=True` to
+  invalidate an existing completed cache entry.
 - Automatic export discovery targets ordinary `#[pyfunction]` declarations.
 - PyO3 classes and manually assembled modules require future registration APIs.
 - Builds target the current interpreter and host platform; cross-compilation

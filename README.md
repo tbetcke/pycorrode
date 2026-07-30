@@ -112,7 +112,7 @@ spec = ExtensionSpec(
 )
 ```
 
-Additional crates.io dependencies can be declared as strings:
+Crates.io dependencies can be declared using version strings:
 
 ```python
 spec = ExtensionSpec(
@@ -122,7 +122,8 @@ spec = ExtensionSpec(
 )
 ```
 
-Or with features:
+Use `CargoDependency` to specify feature flags or disable a crate's default
+features:
 
 ```python
 from pycorrode import CargoDependency, ExtensionSpec
@@ -134,10 +135,46 @@ spec = ExtensionSpec(
         "serde": CargoDependency(
             version="1.0",
             features=("derive",),
+            default_features=False,
         )
     },
 )
 ```
+
+Git dependencies use the repository URL as their source:
+
+```python
+spec = ExtensionSpec(
+    name="uses_git_dependency",
+    source=rust_source,
+    dependencies={
+        "remote-crate": CargoDependency(
+            git="https://github.com/owner/remote-crate.git",
+            features=("fast",),
+        )
+    },
+)
+```
+
+Local dependencies use a filesystem path:
+
+```python
+spec = ExtensionSpec(
+    name="uses_local_dependency",
+    source=rust_source,
+    dependencies={
+        "local-crate": CargoDependency(
+            path="../local-crate",
+            features=("fast",),
+        )
+    },
+)
+```
+
+Each `CargoDependency` must specify exactly one of `version`, `git`, or `path`.
+Feature flags and `default_features` work with every source type. Relative
+filesystem paths are resolved against the current working directory when the
+`CargoDependency` is created.
 
 ## Build and load separately
 
@@ -183,6 +220,10 @@ Use `force=True` to rebuild an entry:
 ```python
 result = build_extension(spec, force=True)
 ```
+
+The cache fingerprints dependency declarations, not the contents behind a local
+path or a moving Git reference. Use `force=True` after changing a local
+dependency or when the Git repository resolves to a newer commit.
 
 ## Errors
 

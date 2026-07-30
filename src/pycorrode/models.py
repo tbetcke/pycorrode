@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import KW_ONLY, dataclass, field
 from pathlib import Path
 from types import MappingProxyType
+from typing import cast
 
 from .errors import PyCorrodeConfigurationError
 
@@ -28,34 +29,80 @@ _PYFUNCTION = re.compile(
 
 @dataclass(frozen=True, slots=True)
 class CargoDependency:
-    """A crates.io dependency for a generated Cargo project."""
+    """A Cargo dependency for a generated project."""
 
-    version: str
+    version: str | None = None
     features: tuple[str, ...] = ()
     default_features: bool = True
+    _: KW_ONLY
+    git: str | None = None
+    path: str | Path | None = None
 
     def __post_init__(self) -> None:
-        version = self.version.strip()
-        if not version:
+        sources = {
+            "version": self.version,
+            "git": self.git,
+            "path": self.path,
+        }
+        selected_sources = [
+            name for name, value in sources.items() if value is not None
+        ]
+        if len(selected_sources) != 1:
             raise PyCorrodeConfigurationError(
-                "Cargo dependency versions cannot be empty"
+                "Cargo dependencies must specify exactly one of version, git, or path"
             )
-        features = tuple(sorted(set(self.features)))
-        if any(not feature.strip() for feature in features):
-            raise PyCorrodeConfigurationError(
-                "Cargo dependency feature names cannot be empty"
-            )
-        object.__setattr__(self, "version", version)
-        object.__setattr__(self, "features", features)
+
+        if self.version is not None:
+            if not isinstance(self.version, str) or not self.version.strip():
+                raise PyCorrodeConfigurationError(
+                    "Cargo dependency versions cannot be empty"
+                )
+            object.__setattr__(self, "version", self.version.strip())
+
+        if self.git is not None:
+            if not isinstance(self.git, str) or not self.git.strip():
+                raise PyCorrodeConfigurationError(
+                    "Cargo dependency Git URLs cannot be empty"
+                )
+            object.__setattr__(self, "git", self.git.strip())
+
+        if self.path is not None:
+            if isinstance(self.path, str) and not self.path.strip():
+                raise PyCorrodeConfigurationError(
+                    "Cargo dependency paths cannot be empty"
+                )
+            try:
+                path = Path(self.path).expanduser().resolve()
+            except (OSError, RuntimeError, TypeError) as error:
+                raise PyCorrodeConfigurationError(
+                    f"Invalid Cargo dependency path: {self.path!r}"
+                ) from error
+            object.__setattr__(self, "path", str(path))
+
+        features: list[str] = []
+        for feature in self.features:
+            if not isinstance(feature, str) or not feature.strip():
+                raise PyCorrodeConfigurationError(
+                    "Cargo dependency feature names cannot be empty"
+                )
+            features.append(feature.strip())
+        normalized_features = tuple(sorted(set(features)))
+        object.__setattr__(self, "features", normalized_features)
 
     def canonical(self) -> dict[str, object]:
         """Return a stable JSON-compatible representation."""
 
-        return {
+        result: dict[str, object] = {
             "default_features": self.default_features,
             "features": list(self.features),
-            "version": self.version,
         }
+        if self.version is not None:
+            result["version"] = self.version
+        elif self.git is not None:
+            result["git"] = self.git
+        else:
+            result["path"] = self.path
+        return result
 
 
 DependencyInput = str | CargoDependency
@@ -132,10 +179,14 @@ class ExtensionSpec:
     def canonical(self) -> dict[str, object]:
         """Return a stable JSON-compatible representation."""
 
+        dependencies = cast(
+            Mapping[str, CargoDependency],
+            self.dependencies,
+        )
         return {
             "dependencies": {
                 name: dependency.canonical()
-                for name, dependency in self.dependencies.items()
+                for name, dependency in dependencies.items()
             },
             "exports": list(self.exports or ()),
             "name": self.name,
