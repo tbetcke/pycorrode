@@ -1,22 +1,11 @@
----
-hide:
-  - navigation
-  - toc
----
+# pycorrode
 
-<div class="pycorrode-hero" markdown>
-
-<p class="pycorrode-kicker">Python ergonomics · Rust performance</p>
-
-# Compile small Rust extensions when Python needs them
+*Python ergonomics. Rust performance.*
 
 `pycorrode` turns Rust functions annotated with `#[pyfunction]` into an
 importable Python module, then caches the native artifact for the next run.
 
-[Get started](getting-started.md){ .md-button .md-button--primary }
-[Explore the API](reference/api.md){ .md-button }
-
-</div>
+[Get started](getting-started.md) · [Explore the API](reference/api.md)
 
 ```python
 from pycorrode import ExtensionSpec, compile_extension
@@ -38,45 +27,35 @@ fn double(value: i64) -> i64 {
 assert extension.double(21) == 42
 ```
 
-<div class="grid cards" markdown>
+## Why pycorrode
 
--   **Build on demand**
+### Build on demand
 
-    ---
+Describe the extension in Python. `pycorrode` generates an isolated Cargo
+project and invokes the local Rust toolchain.
 
-    Describe the extension in Python. `pycorrode` generates an isolated Cargo
-    project and invokes the local Rust toolchain.
+[Compile your first extension](tutorials/first-extension.md)
 
-    [Compile your first extension](tutorials/first-extension.md)
+### Reuse native artifacts
 
--   **Reuse native artifacts**
+Cache keys account for source, dependencies, Python ABI, platform, and
+toolchain, so unchanged extensions load without rebuilding.
 
-    ---
+[Understand caching](how-to/caching.md)
 
-    Cache keys account for source, dependencies, Python ABI, platform, and
-    toolchain, so unchanged extensions load without rebuilding.
+### Bring Cargo dependencies
 
-    [Understand caching](how-to/caching.md)
+Use crates.io versions, Git repositories, commit revisions, branches, local
+paths, feature flags, and default-feature controls.
 
--   **Bring Cargo dependencies**
+[Configure dependencies](how-to/dependencies.md)
 
-    ---
+### See Rust diagnostics
 
-    Use crates.io versions, Git repositories, commit revisions, branches, local
-    paths, feature flags, and default-feature controls.
+Toolchain, configuration, compiler, and loader failures use a focused
+exception hierarchy with Cargo diagnostics preserved.
 
-    [Configure dependencies](how-to/dependencies.md)
-
--   **See Rust diagnostics**
-
-    ---
-
-    Toolchain, configuration, compiler, and loader failures use a focused
-    exception hierarchy with Cargo diagnostics preserved.
-
-    [Handle failures](how-to/error-handling.md)
-
-</div>
+[Handle failures](how-to/error-handling.md)
 
 !!! warning "Alpha software"
 
