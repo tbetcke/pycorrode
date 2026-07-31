@@ -70,8 +70,9 @@ interpreter, platform, and toolchain reuse the validated cached artifact.
 The [documentation site](https://tbetcke.github.io/pycorrode/) includes:
 
 - a [getting-started guide](https://tbetcke.github.io/pycorrode/getting-started/)
-- tutorials for [multiple functions](https://tbetcke.github.io/pycorrode/tutorials/multiple-functions/)
-  and [NumPy arrays](https://tbetcke.github.io/pycorrode/tutorials/numpy-arrays/)
+- tutorials for [multiple functions](https://tbetcke.github.io/pycorrode/tutorials/multiple-functions/),
+  [NumPy arrays](https://tbetcke.github.io/pycorrode/tutorials/numpy-arrays/),
+  and [Rust-backed iteration](https://tbetcke.github.io/pycorrode/tutorials/rust-backed-iterator/)
 - how-to guides for [Cargo dependencies](https://tbetcke.github.io/pycorrode/how-to/dependencies/),
   caching, errors, and troubleshooting
 - the generated [Python API reference](https://tbetcke.github.io/pycorrode/reference/api/)
@@ -83,6 +84,7 @@ The [documentation site](https://tbetcke.github.io/pycorrode/) includes:
 uv run python examples/double/example.py
 uv run python examples/two_functions/example.py
 uv run --extra examples python examples/numpy_sum/example.py
+uv run --extra examples python examples/numpy_iterator/example.py
 ```
 
 ## Development

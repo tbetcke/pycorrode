@@ -57,5 +57,7 @@ storage, so the function can sum the input without first copying it into a Rust
 
 ## Where to go next
 
-Use the [Cargo dependencies](../how-to/dependencies.md) guide for features, Git
+Continue with [Rust-backed iteration](rust-backed-iterator.md) to pass a NumPy
+array into a Rust iterator and delegate Python iteration to it. Use the
+[Cargo dependencies](../how-to/dependencies.md) guide for features, Git
 repositories, branches, revisions, and local paths.

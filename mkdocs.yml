@@ -44,6 +44,7 @@ nav:
       - Your first extension: tutorials/first-extension.md
       - Multiple functions: tutorials/multiple-functions.md
       - NumPy arrays: tutorials/numpy-arrays.md
+      - Rust-backed iteration: tutorials/rust-backed-iterator.md
   - How-to guides:
       - Cargo dependencies: how-to/dependencies.md
       - Caching and rebuilds: how-to/caching.md
